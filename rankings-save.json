@@ -1,0 +1,27 @@
+{
+  "users": {
+    "gblilmar": {
+      "id": "gblilmar",
+      "name": "gblilmar",
+      "xp": 50000,
+      "rankId": 3,
+      "pathChoice": null,
+      "comments": 0,
+      "gifts": 0,
+      "follows": 0,
+      "shares": 0,
+      "likes": 0,
+      "wins": 5,
+      "losses": 2,
+      "tapouts": 0,
+      "streak": 3,
+      "bestStreak": 5,
+      "firstSeen": 1728374400000,
+      "lastSeen": 1728374400000,
+      "lastActive": 1728374400000,
+      "sessions": 1,
+      "activePlatforms": ["discord"],
+      "lastPlatform": "discord"
+    }
+  }
+}

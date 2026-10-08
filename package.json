@@ -5,7 +5,7 @@
   "main": "scouter-server-complete.js",
   "type": "module",
   "scripts": {
-    "start": "node scouter-server-complete.js",
+    "start": "node discord-bot-merged.js",
     "bot": "node discord-bot.js",
     "dev": "node --watch scouter-server-complete.js",
     "deploy": "pm2 start scouter-server-complete.js --name 'hbtc-scouter' && pm2 start discord-bot.js --name 'hbtc-bot'",

@@ -1,0 +1,14 @@
+{
+  "name": "hbtc-scouter-bot",
+  "version": "3.0.0",
+  "type": "module",
+  "main": "discord-bot-tiktok-api.js",
+  "dependencies": {
+    "discord.js": "^14.13.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0"
+  },
+  "scripts": {
+    "start": "node discord-bot-tiktok-api.js"
+  }
+}

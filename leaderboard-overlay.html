@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)file:///C:/Users/Owner/Downloads/leaderboard-overlay_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Scouter Overlay</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&family=Black+Han+Sans&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: transparent;
+  overflow: hidden;
+  width: 340px;
+  height: 100vh;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+#scouter {
+  position: fixed;
+  top: 270px;
+  left: 10px;
+  width: 320px;
+  pointer-events: none;
+}
+
+#sc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 5px;
+  background: rgba(0, 20, 10, 0.55);
+  border: 1px solid rgba(0, 255, 80, 0.35);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+#sc-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,255,80,0.04) 50%, transparent 100%);
+  animation: scanline 3s linear infinite;
+}
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.sc-icon { font-size: 13px; opacity: 0.85; }
+
+.sc-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: rgba(0, 255, 100, 0.9);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  flex: 1;
+  text-shadow: 0 0 8px rgba(0,255,80,0.6);
+}
+
+/* Scroll mode badge shown in header */
+#sc-mode-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(0,255,80,0.12);
+  color: rgba(0,255,80,0.6);
+  border: 1px solid rgba(0,255,80,0.2);
+  transition: all 0.3s;
+}
+#sc-mode-badge.live {
+  background: rgba(255,80,80,0.15);
+  color: rgba(255,120,80,0.9);
+  border-color: rgba(255,100,50,0.4);
+  animation: badgePulse 0.8s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.sc-blink {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #00FF50;
+  box-shadow: 0 0 6px #00FF50;
+  animation: blinkPulse 1s ease-in-out infinite;
+}
+@keyframes blinkPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+.sc-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,80,0.6), rgba(0,255,80,0.2), transparent);
+}
+
+#sc-rows {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+.sc-row {
+  display: grid;
+  grid-template-columns: 20px 15px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 4px 7px;
+  background: rgba(0, 16, 8, 0.52);
+  border-left: 1px solid rgba(0,255,80,0.18);
+  border-right: 1px solid rgba(0,255,80,0.18);
+  border-bottom: 1px solid rgba(0,255,80,0.08);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.5s;
+}
+
+.sc-row::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(0,255,80,0.06);
+  top: 50%;
+  pointer-events: none;
+}
+
+.sc-row[data-rank="0"] { border-left-color: rgba(255,255,255,0.55); }
+.sc-row[data-rank="1"] { border-left-color: rgba(192,160,96,0.5); }
+.sc-row[data-rank="2"] { border-left-color: rgba(255,215,0,0.6); }
+.sc-row[data-rank="3"] { border-left-color: rgba(255,232,64,0.65); }
+.sc-row[data-rank="4"] { border-left-color: rgba(255,215,0,0.7); }
+.sc-row[data-rank="5"] { border-left-color: rgba(204,34,0,0.7); background: rgba(10,2,2,0.55); }
+.sc-row[data-rank="6"] { border-left-color: rgba(255,34,85,0.75); background: rgba(12,0,4,0.55); }
+.sc-row[data-rank="7"] { border-left-color: rgba(68,170,255,0.75); background: rgba(0,4,16,0.55); }
+.sc-row[data-rank="8"] {
+  border-left-color: rgba(200,200,255,0.85);
+  background: rgba(5,5,20,0.58);
+  box-shadow: inset 0 0 20px rgba(180,180,255,0.04);
+}
+
+.sc-pos {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(0,255,80,0.35);
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1;
+}
+.sc-pos.p1 { color: #FFD700; font-size: 12.5px; text-shadow: 0 0 8px rgba(255,200,0,0.8); }
+.sc-pos.p2 { font-size: 12px; }
+.sc-pos.p3 { font-size: 12px; }
+.sc-pos.p2 { color: rgba(200,200,200,0.7); }
+.sc-pos.p3 { color: rgba(205,127,50,0.8); }
+
+.sc-emoji { font-size: 12px; line-height: 1; text-align: center; }
+
+.sc-info { min-width: 0; }
+
+.sc-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(220, 255, 230, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.05;
+  letter-spacing: 0.3px;
+}
+
+.sc-rank-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 1.2px;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.sc-pl-col {
+  text-align: right;
+  flex-shrink: 0;
+  min-width: auto;
+}
+
+.sc-pl-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11.5px;
+  color: rgba(0, 255, 100, 0.9);
+  letter-spacing: 0.5px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(0,255,80,0.5);
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.sc-pl-num.ticking {
+  color: #FFFFFF;
+  text-shadow: 0 0 12px rgba(0,255,80,1), 0 0 24px rgba(0,255,80,0.6);
+}
+
+.sc-pl-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 6.5px;
+  letter-spacing: 2px;
+  color: rgba(0, 255, 80, 0.3);
+  text-align: right;
+  margin-top: 1px;
+}
+
+.sc-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 4px;
+  background: rgba(0,255,80,0.08);
+  overflow: hidden;
+}
+.sc-bar-fill {
+  height: 100%;
+  transition: width 1.4s cubic-bezier(.34,1.4,.64,1);
+  position: relative;
+}
+.sc-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -1px; bottom: -1px;
+  width: 8px;
+  background: rgba(255,255,255,0.7);
+  filter: blur(2px);
+}
+
+#sc-footer {
+  padding: 4px 10px;
+  background: rgba(0, 16, 8, 0.50);
+  border: 1px solid rgba(0,255,80,0.2);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sc-footer-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px;
+  color: rgba(0,255,80,0.3);
+  letter-spacing: 1.5px;
+}
+.sc-footer-dots { display: flex; gap: 3px; }
+.sc-footer-dots span {
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: rgba(0,255,80,0.25);
+}
+.sc-footer-dots span:first-child { background: rgba(0,255,80,0.7); animation: dotCycle 1.5s infinite; }
+.sc-footer-dots span:nth-child(2) { animation: dotCycle 1.5s 0.5s infinite; }
+.sc-footer-dots span:nth-child(3) { animation: dotCycle 1.5s 1s infinite; }
+@keyframes dotCycle {
+  0%,100% { background: rgba(0,255,80,0.25); }
+  50%      { background: rgba(0,255,80,0.8); }
+}
+
+@keyframes rowSlideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.sc-row.entering { animation: rowSlideIn 0.4s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+@keyframes rowSlideOut {
+  from { opacity: 1; max-height: 40px; }
+  to   { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; border-bottom-width: 0; }
+}
+.sc-row.leaving { animation: rowSlideOut 0.4s ease-in forwards; overflow: hidden; }
+
+@keyframes rowFlash {
+  0%   { background-color: rgba(0,255,80,0.0); }
+  20%  { background-color: rgba(0,255,80,0.15); }
+  100% { background-color: rgba(0,255,80,0.0); }
+}
+.sc-row.flashing { animation: rowFlash 0.7s ease-out; }
+
+/* Activity interrupt flash — stronger pulse on the active user row */
+@keyframes activityPulse {
+  0%   { background-color: rgba(0,255,80,0.0); }
+  15%  { background-color: rgba(0,255,80,0.22); }
+  50%  { background-color: rgba(0,255,80,0.08); }
+  100% { background-color: rgba(0,255,80,0.0); }
+}
+.sc-row.activity-hit { animation: activityPulse 1s ease-out; }
+
+/* ─── ACTIVITY STRIP — single compact line, docked into the footer row ─── */
+#activity-feed {
+  position: fixed;
+  bottom: 16px;
+  left: 10px;
+  width: 320px;
+  height: 22px;              /* fixed height — can never grow into the board */
+  overflow: hidden;
+  pointer-events: none;
+}
+.feed-item {
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: rgba(0, 14, 7, 0.80);
+  border: 1px solid rgba(0,255,80,0.22);
+  border-left: 2px solid rgba(0,255,80,0.55);
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9.5px;
+  color: rgba(0,255,120,0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(6px);
+  animation: feedSwap 0.34s cubic-bezier(.34,1.5,.64,1) forwards;
+}
+/* new item slides up from below, replacing the old one in place */
+@keyframes feedSwap {
+  from { opacity:0; transform: translateY(14px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.feed-item.leaving { animation: feedLeave 0.28s ease-in forwards; }
+@keyframes feedLeave {
+  from { opacity:1; transform: translateY(0); }
+  to   { opacity:0; transform: translateY(-14px); }
+}
+
+/* ─── RANK-UP BANNER ─── */
+#rankup-banner {
+  position: fixed;
+  bottom: 120px;
+  left: 10px;
+  width: 320px;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+#rankup-banner.show { opacity: 1; transform: translateY(0); }
+.ru-bar { height: 3px; border-radius: 3px 3px 0 0; }
+.ru-body {
+  background: rgba(0, 10, 5, 0.85);
+  border: 1px solid rgba(0,255,80,0.3);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 8px 14px;
+  backdrop-filter: blur(10px);
+}
+.ru-eyebrow { font-family: 'Share Tech Mono', monospace; font-size: 7px; letter-spacing: 3px; color: rgba(0,255,80,0.5); margin-bottom: 4px; }
+.ru-name { font-family: 'Black Han Sans', sans-serif; font-size: 16px; color: #FFFFFF; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ru-ranks { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+.ru-old { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.3); text-decoration: line-through; }
+.ru-arrow { font-size: 10px; color: rgba(0,255,80,0.8); }
+.ru-new { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 1.5px; animation: ruFlare 0.6s ease-out; }
+@keyframes ruFlare { from { transform: scale(1.3); opacity:0; } to { transform: scale(1); opacity:1; } }
+
+
+/* ─── WIN/LOSS RECORD BADGE ─── */
+.sc-wl { font-family:'Share Tech Mono',monospace; font-size:9.5px; font-weight:900; letter-spacing:.3px;
+  color:rgba(0,255,150,0.95); margin-left:5px; background:rgba(0,255,120,0.1);
+  border:1px solid rgba(0,255,120,0.3); border-radius:4px; padding:0 4px; white-space:nowrap; }
+.sc-wl .l { color:rgba(255,130,130,0.95); }
+.sc-wl .streak { color:#ffb02e; text-shadow:0 0 6px rgba(255,160,0,0.9); margin-left:2px; }
+
+/* ─── #1 ALL-TIME RAINBOW ─── */
+@keyframes rbMove { to { background-position: 300% 50%; } }
+@keyframes rbFade { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.rainbow {
+  background: linear-gradient(90deg,#ff2d55,#ff9500,#ffe600,#34ff5a,#00e5ff,#7a5cff,#ff2d55);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: rbMove 3s linear infinite, rbFade 1.3s ease-in-out infinite;
+}
+
+/* ─── ULTRA INSTINCT FULL-ROW PULSE ─── */
+@keyframes uiBg   { 0%,100% { background: rgba(6,6,26,0.62); }  50% { background: rgba(22,17,58,0.78); } }
+@keyframes uiTag  { 0%,100% { color:#DDDDFF; }                  50% { color:#9fe8ff; text-shadow:0 0 9px rgba(120,200,255,0.9); } }
+@keyframes uiNum  { 0%,100% { color:#cfd4ff; }                  50% { color:#ffffff; text-shadow:0 0 13px rgba(140,190,255,0.95); } }
+@keyframes uiBar  { 0%,100% { background: linear-gradient(90deg,#8f9bff,#c9d4ff); } 50% { background: linear-gradient(90deg,#5fd4ff,#ffffff); } }
+.sc-row.ui-row              { animation: uiBg  2.4s ease-in-out infinite; }
+.sc-row.ui-row .sc-rank-tag { animation: uiTag 2.4s ease-in-out infinite; }
+.sc-row.ui-row .sc-pl-num   { animation: uiNum 2.4s ease-in-out infinite; }
+.sc-row.ui-row .sc-bar-fill { animation: uiBar 2.4s ease-in-out infinite; }
+
+/* ─── PER-TIER STYLE TREATMENTS (top ranks) ─── */
+/* Omni-King — rainbow name, the sole ruler */
+.style-omni {
+  background: linear-gradient(90deg,#ff2d55,#ff9500,#ffe600,#34ff5a,#00e5ff,#7a5cff,#ff2d55);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: rbMove 3s linear infinite, rbFade 1.3s ease-in-out infinite;
+  font-weight: 900;
+}
+/* Angel — baby-blue pulsing halo */
+@keyframes angelPulse {
+  0%,100% { color:#8FD4FF; text-shadow:0 0 6px rgba(143,212,255,0.5); }
+  50%     { color:#E6F6FF; text-shadow:0 0 16px rgba(143,212,255,1), 0 0 28px rgba(120,190,255,0.7); }
+}
+.style-angel { animation: angelPulse 2.2s ease-in-out infinite; font-weight:700; }
+
+/* Mastered Ultra Instinct — white, pulsing (a god-tier calm) */
+@keyframes muiPulse {
+  0%,100% { color:#FFFFFF; text-shadow:0 0 6px rgba(221,232,255,0.6); }
+  50%     { color:#EAF2FF; text-shadow:0 0 16px rgba(255,255,255,1), 0 0 28px rgba(180,210,255,0.7); }
+}
+.style-mui { animation: muiPulse 2.3s ease-in-out infinite; font-weight:800; }
+
+/* God of Destruction — purple-into-black radiant pulse */
+@keyframes destroyerPulse {
+  0%,100% { color:#A020F0; text-shadow:0 0 6px rgba(160,32,240,0.6); }
+  50%     { color:#D57BFF; text-shadow:0 0 18px rgba(160,32,240,1), 0 0 30px rgba(74,0,128,0.9); }
+}
+.style-destroyer { animation: destroyerPulse 2.4s ease-in-out infinite; font-weight:800; }
+
+/* Ultra Instinct Sign — silver-blue over deep space black */
+.style-uisign { color:#3AA0FF; text-shadow:0 0 8px rgba(58,160,255,0.7), 0 0 14px rgba(10,22,51,0.9); font-weight:700; }
+
+/* Ultra Ego — magenta-violet menace */
+.style-ego { color:#C04CFF; text-shadow:0 0 9px rgba(192,76,255,0.7); font-weight:800; }
+
+/* ─── BATTLE BANNER ─── */
+#battle-banner { overflow:hidden; max-height:0; opacity:0;
+  transition: max-height .45s cubic-bezier(.34,1.4,.64,1), opacity .3s; }
+#battle-banner.show { max-height: 140px; opacity: 1; }
+.bb-in { padding:6px 9px; background:rgba(26,2,26,0.94);
+  border:1px solid rgba(220,80,255,0.55); border-left:3px solid #dc50ff;
+  border-radius:8px 8px 0 0; position:relative;
+  animation: bbPulse .9s ease-in-out infinite; }
+@keyframes bbPulse { 0%,100% { box-shadow: inset 0 0 12px rgba(200,60,255,0.2); }
+                     50%     { box-shadow: inset 0 0 30px rgba(220,80,255,0.6); } }
+.bb-in.duel { background:rgba(30,2,6,0.94); border-color:rgba(255,60,60,0.55); border-left-color:#ff3b3b;
+  animation: bbPulseR 1.1s ease-in-out infinite; }
+@keyframes bbPulseR { 0%,100% { box-shadow: inset 0 0 12px rgba(255,40,40,0.15); }
+                      50%     { box-shadow: inset 0 0 28px rgba(255,40,40,0.45); } }
+.bb-in.struggle { background:rgba(34,14,2,0.94); border-color:rgba(255,150,40,0.55); border-left-color:#ff9528;
+  animation: bbPulseO 1s ease-in-out infinite; }
+@keyframes bbPulseO { 0%,100% { box-shadow: inset 0 0 12px rgba(255,150,40,0.15); }
+                      50%     { box-shadow: inset 0 0 30px rgba(255,150,40,0.5); } }
+.bb-eyebrow { font-family:'Share Tech Mono',monospace; font-size:6.5px; letter-spacing:1.6px; margin-bottom:4px; }
+.bb-line { display:grid; grid-template-columns:9px 1fr auto; gap:5px; align-items:center; font-size:11px; padding:1px 0; }
+.bb-name { font-family:'Rajdhani',sans-serif; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bb-name.behind { color: rgba(255,255,255,0.85); }
+.bb-xp { font-family:'Share Tech Mono',monospace; font-size:8px; }
+.bb-sub { font-family:'Share Tech Mono',monospace; font-size:6.5px; margin-top:4px; }
+.bb-timer { position:absolute; left:0; bottom:0; height:2px; width:100%; }
+
+/* ─── FOOTER TICKER ─── */
+#sc-ticker { white-space:nowrap; display:inline-block;
+  font-family:'Share Tech Mono',monospace; font-size:6.5px; letter-spacing:1px;
+  color:rgba(0,255,80,0.55); animation: tkScroll 22s linear infinite; }
+@keyframes tkScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-175%); } }
+
+
+/* ─── RACE HUD (persistent while a race runs) ─── */
+#race-hud { overflow:hidden; max-height:0; opacity:0;
+  transition: max-height .4s cubic-bezier(.34,1.4,.64,1), opacity .3s; }
+#race-hud.show { max-height:160px; opacity:1; }
+.rh-in { padding:5px 9px; position:relative; border-radius:8px 8px 0 0;
+  background:rgba(26,2,26,0.94); border:1px solid rgba(220,80,255,0.5);
+  border-left:3px solid #dc50ff; }
+#race-hud.duel .rh-in     { background:rgba(30,2,6,0.94);  border-color:rgba(255,60,60,0.55);  border-left-color:#ff3b3b; }
+#race-hud.struggle .rh-in { background:rgba(34,14,2,0.94); border-color:rgba(255,150,40,0.55); border-left-color:#ff9528; }
+#race-hud .rh-ttl, #race-hud .rh-tgt, #race-hud .rh-pos, #race-hud .rh-need { color:rgba(230,160,255,0.85); }
+#race-hud.duel .rh-ttl, #race-hud.duel .rh-tgt, #race-hud.duel .rh-pos, #race-hud.duel .rh-need { color:rgba(255,160,160,0.9); }
+#race-hud.struggle .rh-ttl, #race-hud.struggle .rh-tgt, #race-hud.struggle .rh-pos, #race-hud.struggle .rh-need { color:rgba(255,190,120,0.9); }
+#race-hud .rh-fill     { background:linear-gradient(90deg,#a020c0,#e79bff); }
+#race-hud.duel .rh-fill{ background:linear-gradient(90deg,#c02020,#ff8a8a); }
+#race-hud.struggle .rh-fill { background:linear-gradient(90deg,#c06010,#ffc078); }
+#race-hud .rh-bar      { background:rgba(220,80,255,0.14); }
+#race-hud.duel .rh-bar { background:rgba(255,60,60,0.14); }
+#race-hud.struggle .rh-bar { background:rgba(255,150,40,0.14); }
+/* tapout countdown */
+.rh-row.warned .rh-name { color:#ffb0b0; animation: warnFlash .8s ease-in-out infinite; }
+@keyframes warnFlash { 0%,100%{opacity:1} 50%{opacity:.45} }
+.rh-count { font-family:'Share Tech Mono',monospace; font-size:7px; font-weight:700; color:#ff5555;
+  text-shadow:0 0 8px rgba(255,60,60,0.9); animation: warnFlash .8s ease-in-out infinite; }
+.rh-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.rh-ttl { font-family:'Share Tech Mono',monospace; font-size:6.5px; letter-spacing:1.5px; color:#5fe6ff; }
+.rh-tgt { font-family:'Share Tech Mono',monospace; font-size:6.5px; color:rgba(120,230,255,0.75); }
+.rh-row { display:grid; grid-template-columns:14px 1fr 88px auto; gap:6px; align-items:center; padding:3px 0; position:relative; }
+.rh-row.leading { background:linear-gradient(90deg,rgba(255,215,0,0.1),transparent); border-radius:4px; }
+.rh-pos { font-family:'Share Tech Mono',monospace; font-size:8px; color:rgba(120,230,255,0.7); text-align:center; }
+.rh-row.leading .rh-pos { font-size:11px; }
+.rh-name { font-family:'Rajdhani',sans-serif; font-size:11px; font-weight:700; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rh-row.leading .rh-name { color:#FFD700; text-shadow:0 0 8px rgba(255,215,0,0.7); }
+.rh-name.out { color:rgba(255,255,255,0.35); text-decoration:line-through; }
+.rh-bar { height:9px; background:rgba(0,220,255,0.14); border-radius:5px; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08); }
+.rh-fill { height:100%; background:linear-gradient(90deg,#0088ff,#5fe6ff); border-radius:5px;
+  transition:width .5s cubic-bezier(.34,1.2,.64,1); position:relative; }
+.rh-fill::after { content:''; position:absolute; right:0; top:0; bottom:0; width:5px;
+  background:rgba(255,255,255,0.6); filter:blur(1.5px); }
+
+.rh-need { font-family:'Share Tech Mono',monospace; font-size:9.5px; font-weight:900;
+  color:#5fe6ff; white-space:nowrap; text-align:right; }
+.rh-need.out { color:rgba(255,120,120,0.85); }
+.rh-tip { font-family:'Share Tech Mono',monospace; font-size:6px; letter-spacing:.6px;
+  color:rgba(230,160,255,0.55); margin-top:4px; text-align:center; }
+#race-hud.duel .rh-tip { color:rgba(255,160,160,0.6); }
+#race-hud.struggle .rh-tip { color:rgba(255,190,120,0.6); }
+#race-hud.remind .rh-in { animation: rhPing 1.1s ease-in-out 3; }
+@keyframes rhPing { 0%,100%{box-shadow:inset 0 0 10px rgba(220,80,255,0.18)} 50%{box-shadow:inset 0 0 30px rgba(220,80,255,0.6)} }
+
+/* ─── WINNER BANNER ─── */
+#race-win { overflow:hidden; max-height:0; opacity:0; text-align:center;
+  transition: max-height .45s cubic-bezier(.34,1.5,.64,1), opacity .3s; }
+#race-win.show { max-height:150px; opacity:1; }
+#race-win .rw-in { padding:7px 10px;
+  background:linear-gradient(180deg, rgba(40,30,0,0.96), rgba(20,14,0,0.96));
+  border:1px solid #FFD700; border-left:3px solid #FFD700; border-radius:8px 8px 0 0;
+  animation: winGlow 1s ease-in-out infinite; }
+@keyframes winGlow { 0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.3)} 50%{box-shadow:0 0 45px rgba(255,215,0,0.75)} }
+.rw-eyebrow { font-family:'Share Tech Mono',monospace; font-size:6px; letter-spacing:2px; color:rgba(255,215,0,0.7); }
+.rw-name { font-family:'Black Han Sans',sans-serif; font-size:15px; color:#FFD700;
+  text-shadow:0 0 18px rgba(255,180,0,0.9); margin:3px 0 2px; }
+.rw-sub { font-family:'Share Tech Mono',monospace; font-size:6px; color:rgba(255,225,150,0.85); }
+.rw-quit { font-family:'Share Tech Mono',monospace; font-size:6px; color:rgba(255,140,140,0.8); margin-top:3px; }
+.rw-bonus { font-family:'Share Tech Mono',monospace; font-size:8px; color:#7CFF9B;
+  text-shadow:0 0 10px rgba(60,255,120,0.7); margin-top:2px; }
+.rw-pens { font-family:'Share Tech Mono',monospace; font-size:6px; color:rgba(255,120,120,0.9); margin-top:3px; line-height:1.5; }
+.rw-pens .dem { color:#ff5555; }
+
+
+/* ─── OMNI-KING CHANGE — the single biggest moment the system has ─── */
+#omni-change { overflow:hidden; max-height:0; opacity:0; text-align:center;
+  transition: max-height .5s cubic-bezier(.34,1.5,.64,1), opacity .3s; }
+#omni-change.show { max-height:170px; opacity:1; }
+#omni-change .ok-in { padding:9px 12px;
+  background:linear-gradient(180deg, rgba(30,25,10,0.97), rgba(10,8,4,0.97));
+  border:1.5px solid #FFD700; border-left:4px solid #FFD700; border-radius:9px 9px 0 0;
+  animation: omniPulse .9s ease-in-out infinite; position:relative; overflow:hidden; }
+#omni-change .ok-in::before { content:''; position:absolute; inset:0;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: omniSheen 2.2s linear infinite; }
+@keyframes omniPulse { 0%,100%{box-shadow:0 0 24px rgba(255,215,0,0.4)} 50%{box-shadow:0 0 60px rgba(255,255,255,0.85)} }
+@keyframes omniSheen { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+.ok-eyebrow { font-family:'Share Tech Mono',monospace; font-size:6.5px; letter-spacing:3px;
+  color:rgba(255,255,255,0.85); position:relative; }
+.ok-name { font-family:'Black Han Sans',sans-serif; font-size:17px; color:#FFD700;
+  text-shadow:0 0 22px rgba(255,215,0,1), 0 0 40px rgba(255,255,255,0.6);
+  margin:4px 0 2px; position:relative; }
+.ok-sub { font-family:'Share Tech Mono',monospace; font-size:7px; color:rgba(255,235,180,0.9);
+  position:relative; }
+.ok-dethroned { font-family:'Share Tech Mono',monospace; font-size:6.5px; color:rgba(255,150,150,0.85);
+  margin-top:3px; position:relative; }
+
+/* ─── RANK DOWN ─── */
+#rankdown { overflow:hidden; max-height:0; opacity:0; text-align:center;
+  transition: max-height .35s cubic-bezier(.34,1.4,.64,1), opacity .25s; }
+#rankdown.show { max-height:60px; opacity:1; }
+#rankdown .rd-in { padding:5px 10px; background:rgba(26,2,2,0.95);
+  border:1px solid rgba(255,60,60,0.6); border-left:3px solid #ff3b3b; }
+.rd-eyebrow { font-family:'Share Tech Mono',monospace; font-size:6.5px; letter-spacing:2px; color:#ff7b7b; }
+.rd-name { font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; color:#fff; margin:1px 0; }
+.rd-move { font-family:'Share Tech Mono',monospace; font-size:8px; color:rgba(255,150,150,0.9); }
+
+/* ─── QUITTER CALLOUT ─── */
+#race-quit { overflow:hidden; max-height:0; opacity:0;
+  transition: max-height .35s cubic-bezier(.34,1.4,.64,1), opacity .25s; }
+#race-quit.show { max-height:40px; opacity:1; }
+#race-quit .rq-in { padding:4px 9px; background:rgba(24,4,4,0.94);
+  border:1px solid rgba(255,80,80,0.5); border-left:3px solid #ff5050; text-align:center; }
+.rq-txt { font-family:'Rajdhani',sans-serif; font-size:10.5px; font-weight:700; color:#ff8a8a;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+
+.spark { position: fixed; border-radius: 50%; pointer-events: none; z-index: 199; }
+</style>
+</head>
+<body>
+
+<div id="scouter">
+  <div id="sc-header">
+    <div class="sc-title">SCOUTER // POWER LVL</div>
+    <div id="sc-mode-badge">TOP 15</div>
+    <div class="sc-blink"></div>
+  </div>
+  <div class="sc-divider"></div>
+  <div id="omni-change">
+    <div class="ok-in">
+      <div class="ok-eyebrow">👑 A NEW OMNI-KING RISES 👑</div>
+      <div class="ok-name" id="ok-name">—</div>
+      <div class="ok-sub" id="ok-sub"></div>
+      <div class="ok-dethroned" id="ok-dethroned"></div>
+    </div>
+  </div>
+
+  <div id="race-win">
+    <div class="rw-in">
+      <div class="rw-eyebrow">RACE COMPLETE</div>
+      <div class="rw-name" id="rw-name">—</div>
+      <div class="rw-sub" id="rw-sub"></div>
+      <div class="rw-bonus" id="rw-bonus"></div>
+      <div class="rw-pens" id="rw-pens"></div>
+      <div class="rw-quit" id="rw-quit"></div>
+    </div>
+  </div>
+
+  <div id="rankdown">
+    <div class="rd-in">
+      <div class="rd-eyebrow">POWER LOST</div>
+      <div class="rd-name" id="rd-name">—</div>
+      <div class="rd-move" id="rd-move"></div>
+    </div>
+  </div>
+
+  <div id="race-quit"><div class="rq-in"><span class="rq-txt" id="rq-txt"></span></div></div>
+
+  <div id="race-hud">
+    <div class="rh-in">
+      <div class="rh-top"><span class="rh-ttl" id="rh-ttl">🏁 RACE IN PROGRESS</span><span class="rh-tgt" id="rh-tgt"></span></div>
+      <div id="rh-list"></div>
+    </div>
+  </div>
+  <div id="battle-banner">
+    <div class="bb-in" id="bb-in">
+      <div class="bb-eyebrow" id="bb-eyebrow">RIVAL DETECTED</div>
+      <div id="bb-list"></div>
+      <div class="bb-sub" id="bb-sub"></div>
+      <div class="bb-timer" id="bb-timer"></div>
+    </div>
+  </div>
+  <div id="sc-rows"></div>
+  <div id="sc-footer">
+    <span id="sc-ticker">❤️ LIKE = 1 XP&nbsp;&nbsp;·&nbsp;&nbsp;💬 COMMENT = 100 XP&nbsp;&nbsp;·&nbsp;&nbsp;➕ FOLLOW = 2,000 XP&nbsp;&nbsp;·&nbsp;&nbsp;🔁 SHARE = 50 XP&nbsp;&nbsp;·&nbsp;&nbsp;🎁 GIFT = BIG XP&nbsp;&nbsp;·&nbsp;&nbsp;💎 BITS &amp; ⭐ SUBS COUNT TOO&nbsp;&nbsp;·&nbsp;&nbsp;🔗 !LINK TO MERGE PLATFORMS&nbsp;&nbsp;·&nbsp;&nbsp;RANK UP TO CLAIM #1</span>
+  </div>
+</div>
+
+<div id="activity-feed"></div>
+
+<div id="rankup-banner">
+  <div class="ru-bar" id="ru-bar"></div>
+  <div class="ru-body">
+    <div class="ru-eyebrow">⚡ POWER LEVEL RISING ⚡</div>
+    <div class="ru-name" id="ru-name">—</div>
+    <div class="ru-ranks">
+      <div class="ru-old" id="ru-old">LOW CLASS</div>
+      <div class="ru-arrow">▶▶</div>
+      <div class="ru-new" id="ru-new">SUPER SAIYAN</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WS_URL = (location.protocol==='https:'?'wss://':'ws://')+location.host;
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────
+const USER_DROP_MS    = 45_000;  // drop a user from active view after 45s of silence
+const PAGE_SIZE       = 8;       // rows shown per scroll page (compact rows fit more)
+const SCROLL_TOP      = 20;      // how many to scroll through when idle
+const PAGE_HOLD_MS    = 3500;    // ms per scroll page
+
+// Ranks 0-7 are the base climb. At 335,000 (SS Blue maxed) a player picks a
+// path once — !ssbe or !uisign in chat — and that choice carries them
+// through BOTH fork levels below. Vegeta's road: SSBE → Ultra Ego.
+// Goku's road: UI Sign → Mastered UI. Same XP requirement either way, pure
+// power parity — the fork is about identity, not strength. Both roads
+// reconverge into one shared cosmic ladder at God of Destruction, since
+// beyond that point you're not fighting as a Saiyan anymore. Omni-King is
+// the literal ceiling of the DB universe — nothing named goes above him,
+// XP just keeps counting from there.
+const RANKS = [
+  { id:0,  name:'Low-Class Warrior',       short:'LOW CLASS', xp:0,         color:'#FFFFFF', aura:'#BBBBBB', emoji:'💩' },
+  { id:1,  name:'Elite Warrior',           short:'ELITE',     xp:2500,      color:'#C0A060', aura:'#A08040', emoji:'⚔️' },
+  { id:2,  name:'Super Saiyan',            short:'SSJ',       xp:10000,     color:'#FFD700', aura:'#FFAA00', emoji:'⚡' },
+  { id:3,  name:'Super Saiyan 2',          short:'SSJ2',      xp:26000,     color:'#FFE840', aura:'#88CCFF', emoji:'⚡⚡' },
+  { id:4,  name:'Super Saiyan 3',          short:'SSJ3',      xp:58000,     color:'#FFD700', aura:'#FFFF88', emoji:'💥' },
+  { id:5,  name:'Super Saiyan 4',          short:'SSJ4',      xp:115000,    color:'#CC2200', aura:'#FF4400', emoji:'🔴' },
+  { id:6,  name:'Super Saiyan God',        short:'SS GOD',    xp:205000,    color:'#FF2255', aura:'#FF0044', emoji:'🔥' },
+  { id:7,  name:'Super Saiyan Blue',       short:'SS BLUE',   xp:335000,    color:'#44AAFF', aura:'#0066FF', emoji:'💠' },
+  // ── FORK 1 — same id, same xp, pick a road (!ssbe / !uisign) ──
+  { id:8,  name:'Super Saiyan Blue Evolved', short:'SSBE',    xp:520000,    color:'#5C6BFF', aura:'#8A4DFF', emoji:'💠', path:'ssbe'   },
+  { id:8,  name:'Ultra Instinct Sign',       short:'UI SIGN', xp:520000,    color:'#3AA0FF', aura:'#0A1633', emoji:'🌀', path:'uisign', style:'uisign' },
+  // ── FORK 2 — the same road continues, equal power either way ──
+  { id:9,  name:'Ultra Ego',               short:'ULTRA EGO', xp:900000,   color:'#C04CFF', aura:'#4A0080', emoji:'😈', path:'ssbe'   },
+  { id:9,  name:'Mastered Ultra Instinct', short:'MUI',        xp:900000,   color:'#FFFFFF', aura:'#DDE8FF', emoji:'🔱', path:'uisign', pulse:true, style:'mui' },
+  // ── reconverged — cosmic hierarchy from here, one shared ladder ──
+  { id:10, name:'God of Destruction',      short:'DESTROYER', xp:2200000,   color:'#A020F0', aura:'#1A0033', emoji:'💜', pulse:true, style:'destroyer' },
+  { id:11, name:'Angel',                   short:'ANGEL',     xp:4200000,   color:'#8FD4FF', aura:'#4AA8E0', emoji:'😇', pulse:true, style:'angel' },
+  { id:12, name:'Omni-King',               short:'OMNI KING', xp:7500000,   color:'#FFD700', aura:'#FFFFFF', emoji:'👑', exclusive:true, rainbow:true },
+];
+
+// Ids 8 and 9 each have TWO entries. FORK_PENDING is a template, not a
+// fixed rank — id/xp get overridden per use so it works at either fork.
+const FORK_PENDING = { name: 'Choose Your Path', short: 'AWAITING PATH',
+                        color: '#9090B0', aura: '#666688', emoji: '⚔️', pending: true };
+
+// Resolves the exact rank object for a given id — path-aware at the fork.
+// If nobody's chosen yet and they're still IN the fork band, this is the
+// one spot that returns the "pick one" placeholder instead of quietly
+// picking a default, so the choice actually means something.
+// Resolves the exact rank object for a given id — path-aware at ANY fork
+// point, not hardcoded to a specific id.
+function rankFor(id, pathChoice) {
+  const matches = RANKS.filter(r => r.id === id);
+  if (matches.length === 1) return matches[0];
+  if (pathChoice) return matches.find(r => r.path === pathChoice) || matches[0];
+  return { ...FORK_PENDING, id, xp: matches[0].xp };
+}
+
+// Correct "what's next" using ID order, not array position — array index and
+// rank id diverge past Super Saiyan Blue because of the forks. rankFor
+// already returns the pending state when it lands on an unresolved fork.
+function nextRankAfter(id, pathChoice) {
+  const ids = [...new Set(RANKS.map(r => r.id))].sort((a, b) => a - b);
+  const idx = ids.indexOf(id);
+  const nextId = ids[Math.min(idx + 1, ids.length - 1)];
+  return rankFor(nextId, pathChoice);
+}
+
+const MAX_RANK_ID = Math.max(...RANKS.map(r => r.id)); // 12 — Omni-King
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── LIVE PL COUNTER ────────────────────────────────────────────────────────
+const displayedValues = {};
+const tickTimers      = {};
+
+function fmtPL(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(2)+'M';
+  if (n >= 10000)   return Math.round(n).toLocaleString();
+  return String(Math.round(n));
+}
+
+function tickTo(id, targetXP) {
+  const el = document.querySelector(`.sc-row[data-id="${id}"] .sc-pl-num`);
+  if (!el) return;
+  const start = displayedValues[id] ?? targetXP;
+  const diff  = targetXP - start;
+  if (diff <= 0) { displayedValues[id] = targetXP; el.textContent = fmtPL(targetXP); return; }
+  const steps = Math.min(60, Math.max(20, Math.floor(diff / 10)));
+  const inc   = diff / steps;
+  let current = start, step = 0;
+  clearInterval(tickTimers[id]);
+  el.classList.add('ticking');
+  tickTimers[id] = setInterval(() => {
+    step++;
+    current += inc;
+    if (step >= steps) {
+      current = targetXP;
+      clearInterval(tickTimers[id]);
+      el.classList.remove('ticking');
+    }
+    displayedValues[id] = current;
+    el.textContent = fmtPL(current);
+  }, 30);
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let fullBoard     = [];   // top 200 from server, sorted by xp desc
+const activeUsers = {};   // id → entry, only users active in last USER_DROP_MS
+const dropTimers  = {};   // per-user expiry timers
+
+let isScrollMode  = false;
+let scrollTimer   = null;
+let scrollOffset  = 0;
+
+// ── ROW HTML ───────────────────────────────────────────────────────────────
+
+// ── BATTLE BANNER ──────────────────────────────────────────────────────────
+const BB = {
+  el:      () => document.getElementById('battle-banner'),
+  inner:   () => document.getElementById('bb-in'),
+  eyebrow: () => document.getElementById('bb-eyebrow'),
+  list:    () => document.getElementById('bb-list'),
+  sub:     () => document.getElementById('bb-sub'),
+  timer:   () => document.getElementById('bb-timer'),
+};
+let bbHideTimer = null;
+
+const BB_STYLE = {
+  duel:     { cls:'duel',     accent:'#ff6b6b', dim:'rgba(255,160,160,0.9)', bar:'#ff3b3b', icon:'⚔' },
+  struggle: { cls:'struggle', accent:'#ffb457', dim:'rgba(255,190,120,0.85)', bar:'#ff9528', icon:'⚡' },
+  war:      { cls:'',         accent:'#e79bff', dim:'rgba(230,160,255,0.85)', bar:'#dc50ff', icon:'🔥' },
+};
+
+function renderBattle(b) {
+  const s = BB_STYLE[b.kind] || BB_STYLE.war;
+  const inner = BB.inner();
+  inner.className = 'bb-in ' + s.cls;
+
+  BB.eyebrow().style.color = s.accent;
+  BB.eyebrow().textContent = b.leadChange
+    ? `${s.icon} LEAD CHANGE — ${b.leader} TAKES IT`
+    : b.kind === 'duel'
+      ? `${s.icon} RIVAL DETECTED`
+      : b.kind === 'struggle'
+        ? `${s.icon} POWER STRUGGLE — ${b.total} CONTENDERS`
+        : `${s.icon} WAR FOR ${b.rank} — ${b.total} CONTENDERS`;
+
+  const lead = b.contenders[0];
+  BB.list().innerHTML = b.contenders.map((c, i) => `
+    <div class="bb-line">
+      <span class="bb-xp" style="color:${s.dim};text-align:center">${i + 1}</span>
+      <span class="bb-name ${i ? 'behind' : ''}">${esc(c.name)}</span>
+      <span class="bb-xp" style="color:${s.dim}">${fmtPL(c.xp)}${i ? ` <span style="opacity:.6">−${fmtPL(lead.xp - c.xp)}</span>` : ''}</span>
+    </div>`).join('') + (b.extra > 0
+      ? `<div class="bb-line"><span class="bb-xp" style="color:${s.dim};text-align:center">+</span><span class="bb-name behind" style="opacity:.65">${b.extra} more in range</span><span></span></div>`
+      : '');
+
+  BB.sub().style.color = s.dim;
+  BB.sub().textContent = b.kind === 'duel'
+    ? `GAP: ${fmtPL(b.spread)} PWR — ${b.rank} CONTESTED`
+    : `${fmtPL(b.spread)} SEPARATES ${b.total} — FIRST TO ${fmtPL(b.nextXp)} TAKES ${b.nextRank}`;
+
+  const t = BB.timer();
+  t.style.background = s.bar;
+  t.style.transition = 'none';
+  t.style.width = '100%';
+  requestAnimationFrame(() => {
+    t.style.transition = `width ${(b.displayMs || 15000) / 1000}s linear`;
+    t.style.width = '0%';
+  });
+
+  BB.el().classList.add('show');
+}
+
+
+
+// ── ALERT SLOT MANAGER ─────────────────────────────────────────────────────
+// Only ONE transient alert is ever on screen at a time. Everything else queues.
+// The race HUD is persistent and renders below the slot, so the column height
+// is capped at: one alert + the HUD + the leaderboard.
+const ALERT_PRIORITY = { omniKingChange: 6, raceWin: 5, rankdown: 4, raceWarn: 3, battle: 2, pathChosen: 2, economyEvent: 1, raceSaved: 1, raceQuit: 1, followBonus: 0, linkCode: 0, linkSuccess: 1 };
+let alertQueue = [], alertActive = null, alertTimer = null;
+
+function hideAllAlerts() {
+  ['omni-change', 'race-win', 'rankdown', 'race-quit', 'battle-banner']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('show'); });
+}
+
+function queueAlert(kind, data, ms) {
+  const prio = ALERT_PRIORITY[kind] || 0;
+
+  // Higher priority interrupts whatever is showing
+  if (alertActive && prio > (ALERT_PRIORITY[alertActive] || 0)) {
+    clearTimeout(alertTimer);
+    hideAllAlerts();
+    alertActive = null;
+    setTimeout(() => playAlert(kind, data, ms), 260);
+    return;
+  }
+  if (alertActive) {
+    // Drop duplicates of the same kind that are already waiting
+    alertQueue = alertQueue.filter(a => a.kind !== kind);
+    alertQueue.push({ kind, data, ms });
+    alertQueue.sort((a, b) => (ALERT_PRIORITY[b.kind] || 0) - (ALERT_PRIORITY[a.kind] || 0));
+    if (alertQueue.length > 3) alertQueue.length = 3;
+    return;
+  }
+  playAlert(kind, data, ms);
+}
+
+function playAlert(kind, data, ms) {
+  alertActive = kind;
+  if (kind === 'omniKingChange') renderOmniKingChange(data);
+  if (kind === 'raceWin')  renderRaceWin(data);
+  if (kind === 'rankdown') renderRankDown(data);
+  if (kind === 'raceQuit')  renderQuitter(data);
+  if (kind === 'raceWarn')  renderWarn(data);
+  if (kind === 'followBonus') renderFollowBonus(data);
+  if (kind === 'economyEvent') renderEconomyEvent(data);
+  if (kind === 'linkCode')    renderLinkCode(data);
+  if (kind === 'pathChosen')   renderPathChosen(data);
+  if (kind === 'linkSuccess') renderLinkSuccess(data);
+  if (kind === 'raceSaved') renderSaved(data);
+  if (kind === 'battle')   renderBattle(data);
+
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(() => {
+    hideAllAlerts();
+    alertActive = null;
+    if (alertQueue.length) {
+      const nxt = alertQueue.shift();
+      setTimeout(() => playAlert(nxt.kind, nxt.data, nxt.ms), 320);
+    }
+  }, ms);
+}
+
+// ── RACE HUD / WINNER / QUITTERS ───────────────────────────────────────────
+let raceHideTimer = null, quitTimer = null;
+let raceWatchdog = null;
+
+// If nothing confirms the race for 35s (server restart, crash, missed raceEnd),
+// hide the HUD on our own instead of leaving a duel stuck on screen forever.
+function pokeRaceWatchdog() {
+  clearTimeout(raceWatchdog);
+  raceWatchdog = setTimeout(() => {
+    console.warn('race watchdog: no signal, clearing HUD');
+    endRace();
+  }, 35000);
+}
+
+const RACE_TIP = '\uD83D\uDCAC COMMENT OR \uD83C\uDF81 GIFT TO CLOSE THE GAP \u00B7 FIRST TO THE TARGET WINS';
+
+function renderRace(d) {
+  const hud = document.getElementById('race-hud');
+  hud.classList.remove('duel', 'struggle');
+  if (d.kind === 'duel' || d.kind === 'struggle') hud.classList.add(d.kind);
+
+  const label = d.kind === 'duel' ? '⚔ DUEL IN PROGRESS'
+              : d.kind === 'struggle' ? '⚡ POWER STRUGGLE'
+              : '🔥 WAR IN PROGRESS';
+  document.getElementById('rh-ttl').textContent = label;
+  document.getElementById('rh-tgt').textContent = `→ ${fmtPL(d.target)} · ${d.targetRank}`;
+
+  // Whoever's alive and furthest along is the current leader — highlighted
+  const alive = d.runners.filter(r => !r.quit);
+  const leaderId = alive.length ? alive.reduce((a, b) => (b.pct > a.pct ? b : a)).id : null;
+
+  document.getElementById('rh-list').innerHTML = d.runners.map((r, i) => {
+    const isLeader = r.id === leaderId && !r.quit;
+    const posIcon = r.quit ? '🚪' : r.warning ? '⏳' : isLeader ? '👑' : (i + 1);
+    return `
+    <div class="rh-row ${r.warning ? 'warned' : ''} ${isLeader ? 'leading' : ''}" data-id="${r.id}">
+      <span class="rh-pos">${posIcon}</span>
+      <span class="rh-name ${r.quit ? 'out' : ''}">${esc(r.name)}</span>
+      <span class="rh-bar"><span class="rh-fill" style="width:${r.quit ? 0 : r.pct}%"></span></span>
+      ${r.warning
+        ? `<span class="rh-count">${r.secsLeft}s</span>`
+        : `<span class="rh-need ${r.quit ? 'out' : ''}">${r.quit ? 'OUT' : fmtPL(r.need) + ' left'}</span>`}
+    </div>`;
+  }).join('') + `<div class="rh-tip">${RACE_TIP}</div>`;
+
+  hud.classList.add('show');
+  pokeRaceWatchdog();
+}
+
+
+
+function endRace() {
+  clearTimeout(raceWatchdog);
+  const hud = document.getElementById('race-hud');
+  hud.classList.remove('show');
+  hud.classList.remove('duel', 'struggle', 'remind');
+}
+
+
+function renderOmniKingChange(d) {
+  const el = document.getElementById('omni-change');
+  document.getElementById('ok-name').textContent = d.name;
+  document.getElementById('ok-sub').textContent = `${fmtPL(d.xp)} XP — the sole ruler of everything`;
+  document.getElementById('ok-dethroned').textContent =
+    d.previousName ? `${d.previousName} has been dethroned` : 'The throne was empty. Not anymore.';
+  el.classList.add('show');
+  spawnParticles('#FFD700', '#FFFFFF');
+  setTimeout(() => spawnParticles('#FFD700', '#FFFFFF'), 400);
+}
+
+function renderRaceWin(d) {
+  const el = document.getElementById('race-win');
+  const eb = el.querySelector('.rw-eyebrow');
+  if (eb) eb.textContent = d.walkover ? 'LAST ONE STANDING' : 'RACE COMPLETE';
+  document.getElementById('rw-name').textContent = d.name;
+  const parts = [];
+  if (d.walkover) {
+    parts.push('WINS BY WALKOVER — EVERYONE ELSE TAPPED OUT');
+  } else {
+    parts.push(`HIT ${fmtPL(d.target)} XP`);
+    if (d.runnerUp) parts.push(`BEAT ${d.runnerUp.toUpperCase()} BY ${fmtPL(d.margin)}`);
+  }
+  if (d.record) parts.push(`NOW ${d.record}${d.streak > 1 ? ` · ${d.streak} STRAIGHT 🔥` : ''}`);
+  document.getElementById('rw-sub').textContent = parts.join('  ·  ');
+  document.getElementById('rw-bonus').textContent = d.bonus ? `+${fmtPL(d.bonus)} XP BONUS` : '';
+  const pens = (d.penalties || []);
+  document.getElementById('rw-pens').innerHTML = pens.length
+    ? pens.map(p => `${esc(p.name)}${p.lost ? ` −${fmtPL(p.lost)}` : ''}${p.record ? ` (${p.record})` : ''}${p.demoted ? ` <span class="dem">▼ ${p.demoted}</span>` : ''}`).join('  ·  ')
+    : '';
+  document.getElementById('rw-quit').textContent =
+    d.quitters && d.quitters.length ? `QUIT: ${d.quitters.join(', ')}` : '';
+  el.classList.add('show');
+  spawnParticles('#FFD700', '#FFAA00');
+  endRace();
+}
+
+let rdTimer = null;
+function renderRankDown(d) {
+  const el = document.getElementById('rankdown');
+  document.getElementById('rd-name').textContent = d.name;
+  document.getElementById('rd-move').textContent =
+    `${d.oldRank.short} ▼ ${d.newRank.short}`;
+  el.classList.add('show');
+}
+
+function renderWarn(d) {
+  const el = document.getElementById('race-quit');
+  el.querySelector('.rq-in').style.borderLeftColor = '#ffaa00';
+  el.querySelector('.rq-in').style.borderColor = 'rgba(255,170,0,0.55)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = '#ffcc66';
+  t.textContent = `${d.name} — ${d.secs}s to get back in ⏳`;
+  el.classList.add('show');
+}
+
+function renderSaved(d) {
+  const el = document.getElementById('race-quit');
+  el.querySelector('.rq-in').style.borderLeftColor = '#4fff8f';
+  el.querySelector('.rq-in').style.borderColor = 'rgba(80,255,140,0.5)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = '#8affb0';
+  t.textContent = `${d.name} made it back 🛟`;
+  el.classList.add('show');
+}
+
+function renderFollowBonus(d) {
+  const el = document.getElementById('race-quit');
+  const box = el.querySelector('.rq-in');
+  box.style.borderLeftColor = '#ff2d78';
+  box.style.borderColor = 'rgba(255,45,120,0.5)';
+  box.style.background = 'rgba(26,2,14,0.94)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = '#ff6fa8';
+  t.textContent = `➕ ${d.name} followed — +${fmtPL(d.xp)} XP`;
+  el.classList.add('show');
+}
+
+function renderPathChosen(d) {
+  const el = document.getElementById('race-quit');
+  const box = el.querySelector('.rq-in');
+  box.style.borderLeftColor = d.color || '#B0B0FF';
+  box.style.borderColor = (d.color || '#B0B0FF') + '88';
+  box.style.background = 'rgba(14,4,24,0.95)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = d.color || '#B0B0FF';
+  t.style.textShadow = `0 0 8px ${d.color || '#B0B0FF'}88`;
+  t.textContent = `${d.emoji || '⚔️'} ${d.name} chose their path — ${d.short}`;
+  el.classList.add('show');
+}
+
+function renderLinkCode(d) {
+  const el = document.getElementById('race-quit');
+  const box = el.querySelector('.rq-in');
+  box.style.borderLeftColor = '#7fd4ff';
+  box.style.borderColor = 'rgba(80,180,255,0.5)';
+  box.style.background = 'rgba(2,14,26,0.94)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = '#7fd4ff';
+  t.textContent = `🔗 ${d.name}: code ${d.code} — post it on another platform to link`;
+  el.classList.add('show');
+}
+
+function renderLinkSuccess(d) {
+  const el = document.getElementById('race-quit');
+  const box = el.querySelector('.rq-in');
+  box.style.borderLeftColor = '#4fff8f';
+  box.style.borderColor = 'rgba(80,255,140,0.5)';
+  box.style.background = 'rgba(2,22,10,0.94)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = '#8affb0';
+  // Never name the platforms on screen — just confirm the merge happened
+  t.textContent = `🔗 ${d.name} linked accounts — ${fmtPL(d.totalXp)} XP combined`;
+  el.classList.add('show');
+}
+
+const ECONOMY_ICON  = { bits:'💎', sub:'⭐', resub:'⭐', subgift:'🎁', massgift:'🎁', raid:'🚀', kicks:'💠' };
+const ECONOMY_COLOR = { twitch:'#9146FF', kick:'#53FC18' };
+
+function renderEconomyEvent(d) {
+  const el = document.getElementById('race-quit');
+  const box = el.querySelector('.rq-in');
+  const c = ECONOMY_COLOR[d.platform] || '#7fd4ff';
+  box.style.borderLeftColor = c;
+  box.style.borderColor = c + '88';
+  box.style.background = 'rgba(10,6,20,0.95)';
+  const t = document.getElementById('rq-txt');
+  t.style.color = c;
+  t.style.textShadow = `0 0 8px ${c}88`;
+  const icon = ECONOMY_ICON[d.kind] || '💠';
+  t.textContent = `${icon} ${d.name} — ${d.detail} · +${fmtPL(d.xp)} XP`;
+  el.classList.add('show');
+}
+
+function renderQuitter(name) {
+  const el = document.getElementById('race-quit');
+  el.querySelector('.rq-in').style.borderLeftColor = '#ff5050';
+  el.querySelector('.rq-in').style.borderColor = 'rgba(255,80,80,0.5)';
+  document.getElementById('rq-txt').style.color = '#ff8a8a';
+  const lines = [
+    `${name} tapped out 🚪`,
+    `${name} left the race`,
+    `${name} went quiet — out`,
+  ];
+  document.getElementById('rq-txt').textContent = lines[Math.floor(Math.random() * lines.length)];
+  el.classList.add('show');
+}
+
+function buildRowHTML(entry) {
+  const rank  = rankFor(entry.rankId, entry.pathChoice) || RANKS[0];
+  const nextR = nextRankAfter(entry.rankId, entry.pathChoice);
+  const pct   = entry.rankId >= MAX_RANK_ID ? 100
+    : Math.min(100, Math.round((entry.xp - rank.xp) / (nextR.xp - rank.xp) * 100));
+  const posLabel = entry.position ? `#${entry.position}` : '–';
+  const posClass = entry.position === 1 ? 'p1' : entry.position === 2 ? 'p2' : entry.position === 3 ? 'p3' : '';
+  const barGrad  = `linear-gradient(90deg, ${rank.color}, ${rank.aura})`;
+  const isKing = entry.position === 1;
+  // Name styling is driven by the RANK's own flags now, not just position.
+  // Omni-King gets rainbow; Angel/Destroyer/UI-Sign/Ego get their pulse
+  // treatments. The all-time #1 still gets rainbow as a fallback even if
+  // they're somehow not yet at Omni tier.
+  let nameCls = '';
+  if (rank.rainbow)      nameCls = 'rainbow';
+  else if (rank.style)   nameCls = `style-${rank.style}`;
+  else if (isKing)       nameCls = 'rainbow';
+  const nameHTML = nameCls ? `<span class="${nameCls}">${esc(entry.name)}</span>` : esc(entry.name);
+  const posHTML  = (rank.rainbow || isKing) ? `<span class="rainbow">${posLabel}</span>` : posLabel;
+  const progress = entry.rankId >= MAX_RANK_ID
+    ? ' · MAX'
+    : ` · ${fmtPL(entry.xp)}/${fmtPL(nextR.xp)}`;
+  const w = entry.wins || 0, l = entry.losses || 0;
+  const wl = (w + l) > 0
+    ? `<span class="sc-wl">${w}W<span class="l">-${l}L</span>${entry.streak > 1 ? ` <span class="streak">🔥${entry.streak}</span>` : ''}</span>`
+    : '';
+  return `
+    <div class="sc-pos ${posClass}">${posHTML}</div>
+    <div class="sc-emoji">${rank.emoji}</div>
+    <div class="sc-info">
+      <div class="sc-name">${nameHTML}</div>
+      <div class="sc-rank-tag" style="color:${rank.color};text-shadow:0 0 6px ${rank.aura}">${entry.rankName || rank.short}${progress}${wl}</div>
+    </div>
+    <div class="sc-pl-col">
+      <div class="sc-pl-num">${fmtPL(displayedValues[entry.id] ?? entry.xp)}</div>
+      <div class="sc-pl-label">PWR LVL</div>
+    </div>
+    <div class="sc-bar">
+      <div class="sc-bar-fill" style="width:${pct}%;background:${barGrad}"></div>
+    </div>
+  `;
+}
+
+// ── ACTIVE VIEW (DEFAULT) ──────────────────────────────────────────────────
+// Shows whoever has done something recently, sorted by XP, up to 8 rows.
+// This is the normal state during a live stream.
+function renderActiveView(flashId) {
+  const container = document.getElementById('sc-rows');
+
+  // Sort active users by XP desc
+  const sorted = Object.values(activeUsers)
+    .sort((a, b) => b.xp - a.xp)
+    .slice(0, 12);  // active view cap — compact rows fit more of the live crowd
+
+  const existingMap = {};
+  container.querySelectorAll('.sc-row').forEach(el => existingMap[el.dataset.id] = el);
+  const newIds = new Set(sorted.map(e => String(e.id)));
+
+  sorted.forEach((entry, idx) => {
+    let row = existingMap[entry.id];
+    const isNew = !row;
+    if (isNew) {
+      row = document.createElement('div');
+      row.className = 'sc-row entering';
+      row.dataset.id = entry.id;
+      setTimeout(() => row.classList.remove('entering'), 450);
+    }
+    row.dataset.rank = entry.rankId;
+    row.classList.toggle('ui-row', entry.rankId >= 8);
+    row.innerHTML = buildRowHTML(entry);
+    if (isNew) container.appendChild(row);
+    tickTo(entry.id, entry.xp);
+  });
+
+  // Re-order DOM to match sort
+  sorted.forEach(entry => {
+    const el = container.querySelector(`.sc-row[data-id="${entry.id}"]`);
+    if (el) container.appendChild(el);
+  });
+
+  // Remove rows that are no longer active
+  Object.keys(existingMap).forEach(id => {
+    if (!newIds.has(String(id))) {
+      const el = existingMap[id];
+      if (!el.classList.contains('leaving')) {
+        el.classList.add('leaving');
+        setTimeout(() => el.remove(), 420);
+      }
+    }
+  });
+
+  // Flash the row that just got activity
+  if (flashId) {
+    setTimeout(() => flashRow(flashId), 50);
+  }
+
+  // Badge + footer
+  const badge = document.getElementById('sc-mode-badge');
+  if (badge) { badge.textContent = 'LIVE'; badge.classList.add('live'); }
+  const footer = document.querySelector('.sc-footer-text');
+  const count = sorted.length;
+  if (footer) footer.textContent = count
+    ? `${count} ACTIVE FIGHTER${count !== 1 ? 'S' : ''}`
+    : 'WAITING FOR FIGHTERS...';
+}
+
+// ── SCROLL VIEW (IDLE) ─────────────────────────────────────────────────────
+// Only shown when chat has been quiet for IDLE_TIMEOUT_MS.
+function renderScrollPage(animate) {
+  const slice = fullBoard.slice(0, SCROLL_TOP);
+  if (slice.length === 0) return;
+  const page = slice.slice(scrollOffset, scrollOffset + PAGE_SIZE);
+  const container = document.getElementById('sc-rows');
+
+  container.innerHTML = '';
+  page.forEach((entry, idx) => {
+    const row = document.createElement('div');
+    row.className = 'sc-row' + (animate ? ' entering' : '');
+    row.dataset.id   = entry.id;
+    row.dataset.rank = entry.rankId;
+    row.classList.toggle('ui-row', entry.rankId >= 8);
+    row.innerHTML    = buildRowHTML(entry);
+    container.appendChild(row);
+    if (animate) setTimeout(() => row.classList.remove('entering'), 450);
+    tickTo(entry.id, entry.xp);
+  });
+
+  const endIdx = Math.min(scrollOffset + PAGE_SIZE, slice.length);
+  const badge = document.getElementById('sc-mode-badge');
+  if (badge) { badge.textContent = 'TOP 15'; badge.classList.remove('live'); }
+  const footer = document.querySelector('.sc-footer-text');
+  if (footer) footer.textContent = `TOP ${scrollOffset + 1}–${endIdx} OF ${slice.length < SCROLL_TOP ? slice.length : SCROLL_TOP}`;
+}
+
+function advanceScrollPage() {
+  const slice = fullBoard.slice(0, SCROLL_TOP);
+  if (slice.length === 0) return;
+  // If all entries fit on one page there's nothing to scroll — skip
+  if (slice.length <= PAGE_SIZE) return;
+  scrollOffset = (scrollOffset + PAGE_SIZE) % slice.length;
+  renderScrollPage(true);
+}
+
+function startScrollMode() {
+  isScrollMode = true;
+  scrollOffset = 0;
+  renderScrollPage(true);
+  clearInterval(scrollTimer);
+  scrollTimer = setInterval(advanceScrollPage, PAGE_HOLD_MS);
+}
+
+function stopScrollMode() {
+  isScrollMode = false;
+  clearInterval(scrollTimer);
+  scrollTimer = null;
+  // Clear the scroll rows immediately so active view renders clean
+  document.getElementById('sc-rows').innerHTML = '';
+}
+
+// ── PER-USER DROP TIMER ────────────────────────────────────────────────────
+// Each user gets their own 45-second expiry. When it fires, they leave the
+// active view. When activeUsers hits zero, scroll mode starts.
+function scheduleUserDrop(userId) {
+  clearTimeout(dropTimers[userId]);
+  dropTimers[userId] = setTimeout(() => {
+    delete activeUsers[userId];
+    delete dropTimers[userId];
+    if (Object.keys(activeUsers).length === 0) {
+      startScrollMode();
+    } else {
+      renderActiveView(null);
+    }
+  }, USER_DROP_MS);
+}
+
+// ── ACTIVITY EVENT ─────────────────────────────────────────────────────────
+function handleActivity(userId, entry) {
+  if (!userId && userId !== 0) return;
+
+  // Snap out of scroll mode the moment any activity arrives
+  if (isScrollMode) stopScrollMode();
+
+  // Update the active users map with freshest data
+  if (entry) {
+    activeUsers[userId] = { ...activeUsers[userId], ...entry };
+  } else {
+    const found = fullBoard.find(e => String(e.id) === String(userId));
+    if (found) {
+      activeUsers[userId] = found;
+    } else if (!activeUsers[userId]) {
+      activeUsers[userId] = { id: userId, name: String(userId), xp: 0, rankId: 0, rankName: 'LOW CLASS', position: null };
+    }
+  }
+
+  // Reset this user's personal drop timer
+  scheduleUserDrop(userId);
+
+  // Re-render with flash on this user's row
+  renderActiveView(userId);
+}
+
+// ── ROW FLASH ──────────────────────────────────────────────────────────────
+function flashRow(userId) {
+  const row = document.querySelector(`.sc-row[data-id="${userId}"]`);
+  if (!row) return;
+  row.classList.remove('activity-hit', 'flashing');
+  void row.offsetWidth;
+  row.classList.add('activity-hit');
+  setTimeout(() => row.classList.remove('activity-hit'), 1000);
+}
+
+// ── ACTIVITY FEED ──────────────────────────────────────────────────────────
+const FEED_CFG = {
+  chat:   { icon:'💬', color:'rgba(0,255,100,0.85)',  fmt:(n,x)=>`${n}  +${x} PL` },
+  like:   { icon:'❤️', color:'rgba(255,120,120,0.85)', fmt:(n,x,c)=>`${n}  ×${c} likes  +${x} PL` },
+  follow: { icon:'➕', color:'rgba(100,255,160,0.9)',  fmt:(n)=>`${n} followed — POWER BOOST!` },
+  share:  { icon:'🔁', color:'rgba(100,180,255,0.85)', fmt:(n,x)=>`${n} shared  +${x} PL` },
+  gift:   { icon:'🎁', color:'rgba(255,140,255,0.9)',  fmt:(n,x,c)=>`${n}  ${c} coins  +${x} PL` },
+};
+
+function addFeed(action, name, xp, extra) {
+  const cfg  = FEED_CFG[action] || FEED_CFG.chat;
+  const feed = document.getElementById('activity-feed');
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.style.color = cfg.color;
+  item.style.borderColor = cfg.color.replace('0.85','0.2').replace('0.9','0.2');
+  let text = action==='gift'   ? cfg.fmt(name,xp,extra)
+           : action==='like'   ? cfg.fmt(name,xp,extra)
+           : action==='follow' ? cfg.fmt(name)
+           : cfg.fmt(name, xp);
+  item.innerHTML = `<span>${cfg.icon}</span><span>${esc(text)}</span>`;
+
+  // Single-line strip: the newest event replaces whatever's there. The old
+  // one slides out, the new one slides in — never stacks, never grows.
+  const existing = feed.querySelectorAll('.feed-item');
+  existing.forEach(el => {
+    el.classList.add('leaving');
+    setTimeout(() => el.remove(), 280);
+  });
+  feed.appendChild(item);
+
+  // Clear it after a few seconds of no new activity so it doesn't sit stale
+  clearTimeout(feed._clear);
+  feed._clear = setTimeout(() => {
+    if (feed.lastElementChild === item) {
+      item.classList.add('leaving');
+      setTimeout(() => item.remove(), 280);
+    }
+  }, 5000);
+}
+
+// ── RANK-UP BANNER ──────────────────────────────────────────────────────────
+let ruQueue = [], ruPlaying = false;
+
+let ruWatchdog = null;
+
+function ruFinish(banner) {
+  clearTimeout(ruWatchdog);
+  if (banner) banner.classList.remove('show');
+  ruPlaying = false;
+  if (ruQueue.length > 0) setTimeout(() => showRankUp(ruQueue.shift()), 500);
+}
+
+function showRankUp(data) {
+  const banner = document.getElementById('rankup-banner');
+  try {
+    ruPlaying = true;
+    // Watchdog: if anything below throws or stalls, never leave the queue locked
+    clearTimeout(ruWatchdog);
+    ruWatchdog = setTimeout(() => ruFinish(banner), 8000);
+
+    const { name } = data;
+    const oldRank = data.oldRank || RANKS[0];
+    // The server already sends full color/aura on every rank-up broadcast —
+    // use it directly instead of re-deriving from a local array index,
+    // which breaks the moment array position and rank id diverge (the fork).
+    const newRank = data.newRank || RANKS[0];
+    const rank = newRank;
+    document.getElementById('ru-bar').style.background = `linear-gradient(90deg, ${rank.color}, ${rank.aura})`;
+    document.getElementById('ru-bar').style.boxShadow  = `0 0 12px ${rank.aura}`;
+    document.getElementById('ru-name').textContent = name;
+    document.getElementById('ru-old').textContent  = oldRank.short || oldRank.name || '—';
+    const ruNew = document.getElementById('ru-new');
+    ruNew.textContent = newRank.short || newRank.name || '—';
+    ruNew.style.color = rank.color;
+    ruNew.style.textShadow = `0 0 10px ${rank.aura}`;
+    banner.classList.remove('show');
+    void banner.offsetWidth;
+    banner.classList.add('show');
+    spawnParticles(rank.color, rank.aura);
+    if (data.userId) flashRow(data.userId);
+    setTimeout(() => ruFinish(banner), 4500);
+  } catch (e) {
+    console.error('rankup failed:', e);
+    ruFinish(banner);
+  }
+}
+
+function queueRankUp(data) {
+  if (!ruPlaying) showRankUp(data);
+  else ruQueue.push(data);
+}
+
+// ── PARTICLES ───────────────────────────────────────────────────────────────
+function spawnParticles(color, aura) {
+  const palette = [color, aura, '#00FF80', '#FFFFFF'];
+  for (let i = 0; i < 40; i++) {
+    const sp = document.createElement('div');
+    sp.className = 'spark';
+    const sz = 2 + Math.random() * 5;
+    const ox = 5 + Math.random() * 30;
+    const oy = 30 + Math.random() * 40;
+    sp.style.cssText = `left:${ox}vw;top:${oy}vh;width:${sz}px;height:${sz}px;background:${palette[Math.floor(Math.random()*palette.length)]};`;
+    document.body.appendChild(sp);
+    const angle = Math.random()*Math.PI*2;
+    const dist  = 40 + Math.random()*120;
+    const dur   = 300 + Math.random()*700;
+    sp.animate([
+      { transform:'translate(0,0) scale(1)', opacity:1 },
+      { transform:`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`, opacity:0 }
+    ],{ duration:dur, easing:'ease-out' }).onfinish = () => sp.remove();
+  }
+}
+
+// ── WEBSOCKET ────────────────────────────────────────────────────────────────
+function connect() {
+  const ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => console.log('🔭 Scouter connected');
+
+  ws.onmessage = e => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+
+    // ── LEADERBOARD / INIT ──────────────────────────────────────────────────
+    if (m.type === 'init' || m.type === 'leaderboard') {
+      fullBoard = m.leaderboard || [];
+
+      // Always refresh XP data for anyone already in the active view
+      Object.keys(activeUsers).forEach(id => {
+        const fresh = fullBoard.find(e => String(e.id) === String(id));
+        if (fresh) activeUsers[id] = { ...activeUsers[id], ...fresh };
+      });
+
+      const hasActive = Object.keys(activeUsers).length > 0;
+
+      if (hasActive) {
+        // Active fighters exist — always show them, never let leaderboard override
+        if (isScrollMode) stopScrollMode();
+        renderActiveView(null);
+      } else {
+        // No one active — show/refresh scroll mode
+        if (isScrollMode) {
+          renderScrollPage(false);
+        } else {
+          startScrollMode();
+        }
+      }
+    }
+
+    // ── RANKUP ──────────────────────────────────────────────────────────────
+    if (m.type === 'battle')   { queueAlert('battle', m, m.displayMs || 15000); }
+    if (m.type === 'raceAlive') { pokeRaceWatchdog(); }
+    if (m.type === 'raceStart' || m.type === 'raceUpdate') { renderRace(m); }
+    if (m.type === 'raceRemind') {
+      renderRace(m);
+      const h = document.getElementById('race-hud');
+      h.classList.remove('remind'); void h.offsetWidth; h.classList.add('remind');
+      setTimeout(() => h.classList.remove('remind'), 3500);
+    }
+    if (m.type === 'raceWarn')  { renderRace(m); queueAlert('raceWarn', m, 5000); }
+    if (m.type === 'followBonus') { queueAlert('followBonus', m, 3200); }
+    if (m.type === 'economyEvent') { queueAlert('economyEvent', m, 4200); }
+    if (m.type === 'linkCode')    { queueAlert('linkCode', m, 8000); }
+    if (m.type === 'omniKingChange') { queueAlert('omniKingChange', m, 10000); }
+    if (m.type === 'pathChosen')   { queueAlert('pathChosen', m, 5000); }
+    if (m.type === 'linkSuccess') { queueAlert('linkSuccess', m, 5000); }
+    if (m.type === 'raceSaved') { renderRace(m); queueAlert('raceSaved', m, 3500); }
+    if (m.type === 'raceQuit')  { renderRace(m); queueAlert('raceQuit', m.name, 4500); }
+    if (m.type === 'raceWin')  { queueAlert('raceWin', m, 9000); }
+    if (m.type === 'rankdown') { queueAlert('rankdown', m, 5000); }
+    if (m.type === 'raceEnd')  { endRace(); }
+
+    if (m.type === 'rankup') {
+      queueRankUp(m);
+    }
+
+    // ── ACTIVITY ────────────────────────────────────────────────────────────
+    if (m.type === 'activity') {
+      addFeed(m.action, m.name, m.xp, m.count || m.coins);
+      if (m.userId != null) {
+        const boardIdx = fullBoard.findIndex(e => String(e.id) === String(m.userId));
+        if (m.entry) {
+          if (boardIdx >= 0) Object.assign(fullBoard[boardIdx], m.entry);
+          else fullBoard.push(m.entry);
+        }
+        handleActivity(m.userId, m.entry || (boardIdx >= 0 ? fullBoard[boardIdx] : null));
+      }
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('WS closed, reconnecting in 3s...');
+    setTimeout(connect, 3000);
+  };
+}
+
+connect();
+</script>
+
+
+</body></html>

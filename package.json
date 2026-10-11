@@ -1,0 +1,14 @@
+{
+  "name": "hbtc-scouter-bot",
+  "version": "9.0.0",
+  "type": "module",
+  "main": "discord-bot-merged.js",
+  "scripts": {
+    "start": "node discord-bot-merged.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.0",
+    "@tiktool/live": "latest",
+    "dotenv": "^16.3.1"
+  }
+}
